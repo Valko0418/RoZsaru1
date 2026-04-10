@@ -187,7 +187,7 @@ body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);mi
     </div>
     <div class="lerror" id="lerror"></div>
     <div class="fg"><label>Felhasználónév</label><input type="text" id="ln" placeholder="Pl. Nagy János" autocomplete="off"></div>
-    <div class="fg"><label>Jelvényszám</label><input type="text" id="lb" placeholder="Pl. BV-12345" autocomplete="off"></div>
+    <div class="fg"><label>Jelszó</label><input type="text" id="lb" placeholder="Pl. BV-12345" autocomplete="off"></div>
     <button class="bp" id="lbtn" onclick="doLogin()">🔑 Bejelentkezés</button>
     <p class="lnote">Hozzáférésért fordulj a Fő Adatbázis Ügyintézőhöz.</p>
   </div>
@@ -289,7 +289,7 @@ body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);mi
 <div class="moverlay" id="mpw"><div class="modal"><div class="mh"><h3>JELSZÓ VÁLTOZTATÁS</h3><button class="mc" onclick="closeM('mpw')">✕</button></div>
 <div class="dform" id="mpwb">
   <p style="font-size:.82rem;color:var(--gray);margin-bottom:14px">Csak a <strong style="color:var(--gold)">Rendőrfőkapitány (Creator)</strong> és a <strong style="color:var(--gold)">Vezérőrnagy</strong> tud jelszót változtatni más rendőrnek.</p>
-  <div class="fg"><label>Rendőr jelvényszáma</label><input type="text" id="pw-badge" placeholder="Pl. BV-12345" style="text-transform:uppercase"></div>
+  <div class="fg"><label>Rendőr jelszava</label><input type="text" id="pw-badge" placeholder="Pl. BV-12345" style="text-transform:uppercase"></div>
   <div class="fg"><label>Új jelszó</label><input type="password" id="pw-new" placeholder="Minimum 4 karakter"></div>
   <div class="fg"><label>Megerősítés</label><input type="password" id="pw-confirm" placeholder="Ismételd meg"></div>
   <div style="display:flex;gap:8px;margin-top:8px">
