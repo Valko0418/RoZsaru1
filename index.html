@@ -228,6 +228,8 @@ body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);mi
   </div>
 </div>
 
+<!-- MODAL: STATISZTIKA -->
+<div class="moverlay" id="mstat"><div class="modal wide"><div class="mh"><h3 id="mstat-title">📊 STATISZTIKA</h3><button class="mc" onclick="closeM('mstat')">✕</button></div><div id="mstat-body"><div class="lrow">⏳ Betöltés...</div></div></div></div>
 <!-- MODAL: ÚJ/SZERKESZT -->
 <div class="moverlay" id="me"><div class="modal"><div class="mh"><h3 id="met">ÚJ BEJEGYZÉS</h3><button class="mc" onclick="closeM('me')">✕</button></div><div class="dform" id="meb"></div></div></div>
 <!-- MODAL: MEGTEKINTÉS -->
@@ -602,7 +604,7 @@ async function rOff(){
       ${o.note?`<div style="font-size:.72rem;color:var(--gold2);margin-top:2px">📌 ${esc(o.note)}</div>`:''}
     </div>
     <span class="rb rb-${rc(o.rank)}">${esc(o.rank)}</span>
-    <div class="ora"><button class="btn bnavy bsm" onclick="openOM('${o._id}')">✏️</button>${o.badge!=='CREATOR-001'?`<button class="btn bdanger bsm" onclick="remOff('${o._id}')">🗑️</button>`:''}</div>
+    <div class="ora"><button class="btn boutline bsm" onclick="openStats('${o._id}','${esc(o.name)}')">📊</button><button class="btn bnavy bsm" onclick="openOM('${o._id}')">✏️</button>${o.badge!=='CREATOR-001'?`<button class="btn bdanger bsm" onclick="remOff('${o._id}')">🗑️</button>`:''}</div>
   </div>`).join('')}
   </div>`;
 }
@@ -675,6 +677,42 @@ async function remOff(id){
   await fsU('officers',id,{active:'false'});
   toast('Eltávolítva.','info');
   nav('officers');
+}
+async function openStats(officerId, officerName){
+  document.getElementById('mstat-title').textContent='📊 '+officerName+' — Statisztika';
+  document.getElementById('mstat-body').innerHTML='<div class="lrow">⏳ Betöltés...</div>';
+  openM('mstat');
+  try{
+    const cols=Object.keys(PC);
+    const results=await Promise.all(cols.map(col=>fsQ(col).then(items=>({col,items:items.filter(i=>i.authorId===officerId||i.author===officerName)}))));
+    let total=0;
+    let html='';
+    // Összesítő kártyák
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px">';
+    for(const {col,items} of results){
+      if(!items.length)continue;
+      total+=items.length;
+      html+=`<div class="sc" style="cursor:default"><div class="sn" style="font-size:1.4rem">${items.length}</div><div class="sl">${PC[col].l.replace(/^\S+\s/,'')}</div></div>`;
+    }
+    html+=`<div class="sc" style="cursor:default;border:1px solid rgba(201,168,76,.4)"><div class="sn">${total}</div><div class="sl">Összes bejegyzés</div></div>`;
+    html+='</div>';
+    // Részletes logok kollekcióként
+    for(const {col,items} of results){
+      if(!items.length)continue;
+      html+=`<div class="panel" style="margin-bottom:14px">
+        <div class="ptitle">${PC[col].l} <span style="font-size:.75rem;color:var(--gray);font-weight:400">(${items.length} db)</span></div>`;
+      for(const i of items){
+        html+=`<div class="rc" data-col="${col}" onclick="closeM('mstat');openE('${col}','${i._id}')" style="cursor:pointer">
+          <div class="rch"><div class="rct">${esc(i.title||'Cím nélkül')}</div><span class="sb-${i.status||'open'}">${slabel(i.status)}</span></div>
+          <div class="rcm"><span>🕐 ${fd(i.createdAt)}</span>${i.suspect?`<span>👤 ${esc(i.suspect)}</span>`:''}${i.person?`<span>👤 ${esc(i.person)}</span>`:''}${i.amount?`<span>💰 ${esc(String(i.amount))} Ft</span>`:''}</div>
+          ${i.description?`<div class="rcp">${esc(i.description)}</div>`:''}
+        </div>`;
+      }
+      html+='</div>';
+    }
+    if(total===0)html=`<div class="empty"><div class="ei">📭</div><p>Még nincs bejegyzés ehhez a rendőrhöz.</p></div>`;
+    document.getElementById('mstat-body').innerHTML=html;
+  }catch(e){document.getElementById('mstat-body').innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Hiba: ${esc(e.message)}</p></div>`;}
 }
 async function openBulk(){
   if(!isAdmin(CU.rank,CU)){toast('Nincs jogosultságod!','error');return;}
