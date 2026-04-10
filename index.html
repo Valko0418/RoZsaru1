@@ -232,6 +232,39 @@ body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);mi
 <div class="moverlay" id="me"><div class="modal"><div class="mh"><h3 id="met">ÚJ BEJEGYZÉS</h3><button class="mc" onclick="closeM('me')">✕</button></div><div class="dform" id="meb"></div></div></div>
 <!-- MODAL: MEGTEKINTÉS -->
 <div class="moverlay" id="mv"><div class="modal wide"><div class="mh"><h3 id="mvt">BEJEGYZÉS</h3><button class="mc" onclick="closeM('mv')">✕</button></div><div id="mvb"></div></div></div>
+<!-- MODAL: TÖMEGES FRISSÍTÉS -->
+<div class="moverlay" id="mbulk"><div class="modal wide"><div class="mh"><h3>🔄 ADATOK TÖMEGES FRISSÍTÉSE</h3><button class="mc" onclick="closeM('mbulk')">✕</button></div>
+<div class="dform">
+  <p style="font-size:.82rem;color:var(--gray);margin-bottom:14px">Válaszd ki melyik rendőr adatait szeretnéd frissíteni, és csak a módosítani kívánt mezőket töltsd ki.</p>
+  <div class="fg"><label>Rendőr kiválasztása</label><select id="bulk-officer"><option value="">— Válassz rendőrt —</option></select></div>
+  <div id="bulk-fields" style="display:none">
+    <div class="fg"><label>Rendfokozat</label><select id="bulk-rank"><option value="">— Nem változik —</option></select></div>
+    <div class="fg"><label>Beosztás</label><select id="bulk-beosztas"><option value="">— Nem változik —</option>
+      <option>Rendőrfőkapitány</option><option>Rendőrfőkapitány-helyettes</option><option>Kirendeltségvezető</option><option>Kapitányságvezető</option><option>Kiemelt főellenőr</option><option>Osztályvezető</option><option>Alosztályvezető</option><option>Szolgálatirányító tiszt</option><option>Kiemelt főnyomozó</option><option>Kiemelt főelőadó</option><option>Főnyomozó</option><option>Főelőadó</option><option>Nyomozótiszt</option><option>Technikustiszt</option><option>Előadó</option><option>Szolgálatparancsnok</option><option>Csoportvezető</option><option>Nyomozó</option><option>Határrendészeti szakértő</option><option>Baleseti helyszínelő</option><option>Bűnügyi referens</option><option>Kiemelt fő-határrendész</option><option>Járőrparancsnok</option><option>Bűnügyi segédelőadó</option><option>Főhatárrendész</option><option>Járőrvezető</option><option>Bűnügyi fogalmazó</option><option>Határrendész</option><option>Járőr</option>
+    </select></div>
+    <div class="fg"><label>Szolgálati Hely</label><select id="bulk-kap">
+      <option value="">— Nem változik —</option>
+      <option>Békés Vármegyei Rendőr-főkapitányság</option>
+      <option>Mezőkovácsházi Rendőrkapitányság</option>
+      <option>Békéscsabai Rendőrkapitányság</option>
+      <option>Battonyai Határrendészeti Kirendeltség</option>
+    </select></div>
+    <div class="fg"><label>Osztály</label><select id="bulk-osztaly">
+      <option value="">— Nem változik —</option>
+      <option>Rendőrfőkapitány Hivatala</option><option>Közrendvédelmi Osztály</option><option>Közlekedésrendészeti Osztály</option><option>Bűnügyi Osztály</option><option>KÖRÖS Közterületi Támogató Alosztály</option>
+    </select></div>
+    <div class="fg"><label>Alosztály</label><select id="bulk-alosztaly">
+      <option value="">— Nem változik —</option>
+      <option>Járőrszolgálati Alosztály</option><option>Légi Támogató Csoport</option><option>Forgalomellenőrző Alosztály</option><option>Balesethelyszínelői Alosztály</option><option>Nyomozó Alosztály</option><option>Bűnügyi Technikai Csoport</option>
+    </select></div>
+    <div class="fg"><label>Megjegyzés (üres = nem változik)</label><textarea id="bulk-note" rows="2" placeholder="Hagyj üresen ha nem akarod módosítani..." style="width:100%;padding:10px 12px;border:1.5px solid rgba(255,255,255,.12);border-radius:8px;font-family:inherit;font-size:.85rem;background:var(--navy3);color:var(--white);resize:vertical;outline:none"></textarea></div>
+    <div id="bulk-info" style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--gold2);margin-bottom:12px;display:none"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn boutline" style="flex:1" onclick="closeM('mbulk')">Mégse</button>
+      <button class="btn bgold" style="flex:2" id="bulk-save" onclick="saveBulk()">✓ Frissítés</button>
+    </div>
+  </div>
+</div></div></div>
 <!-- MODAL: RENDŐR -->
 <div class="moverlay" id="mo"><div class="modal"><div class="mh"><h3 id="mot">RENDŐR HOZZÁADÁSA</h3><button class="mc" onclick="closeM('mo')">✕</button></div>
 <div class="dform">
@@ -322,8 +355,8 @@ async function savePwChange(){
 const ri=r=>RANKS.indexOf(r);
 const isAdmin=(r,o)=>(o&&(o.dbAdmin===true||o.dbAdmin==='true'))||ri(r)>=ri('Vezérőrnagy')||r==='Creator';
 const canClose=(r,o)=>isAdmin(r,o)||ri(r)>=ri('Hadnagy');
-const canDel=(r,o)=>isAdmin(r,o)||ri(r)>=ri('Vezérőrnagy')||r==='Creator';
-const canEdit=(a,e,eo)=>isAdmin(e,eo)||e==='Creator'||ri(e)>=ri('Vezérőrnagy')||ri(e)>ri(a);
+const canDel=(r,o)=>isAdmin(r,o);
+const canEdit=(a,e,eo)=>isAdmin(e,eo);
 let CU=null,CP='dashboard',CF='all',_it=[];
 const PC={
   wanted:{l:'🔍 Körözések & Elfogatók',f:['title','suspect','description','status']},
@@ -559,7 +592,7 @@ async function rOff(){
   if(!isAdmin(CU.rank,CU))return`<p style="color:var(--danger);padding:20px">Hozzáférés megtagadva.</p>`;
   const all=await fsQ('officers');
   const offs=all.filter(o=>o.active==='true'||o.active===true).sort((a,b)=>ri(b.rank)-ri(a.rank));
-  return`<div class="ph"><div><h2>👥 SZEMÉLYÜGYI NYILVÁNTARTÁS</h2><p>${offs.length} aktív rendőr</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${(CU.rank==='Creator'||CU.rank==='Vezérőrnagy')?`<button class="btn boutline" onclick="openM('mpw')">🔑 Jelszó változtatás</button>`:''}<button class="btn bgold" onclick="openOM(null)">＋ Rendőr hozzáadása</button></div></div>
+  return`<div class="ph"><div><h2>👥 SZEMÉLYÜGYI NYILVÁNTARTÁS</h2><p>${offs.length} aktív rendőr</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${(CU.rank==='Creator'||CU.rank==='Vezérőrnagy')?`<button class="btn boutline" onclick="openM('mpw')">🔑 Jelszó változtatás</button>`:''}<button class="btn boutline" onclick="openBulk()">🔄 Adatok frissítése</button><button class="btn bgold" onclick="openOM(null)">＋ Rendőr hozzáadása</button></div></div>
   <div class="panel"><div class="ptitle">👮 Aktív állomány</div>
   ${offs.length===0?empty('Még nincs rendőr.'):offs.map(o=>`<div class="orrow">
     <div class="orav">${(o.name||'?')[0].toUpperCase()}</div>
@@ -642,6 +675,58 @@ async function remOff(id){
   await fsU('officers',id,{active:'false'});
   toast('Eltávolítva.','info');
   nav('officers');
+}
+async function openBulk(){
+  if(!isAdmin(CU.rank,CU)){toast('Nincs jogosultságod!','error');return;}
+  const all=await fsQ('officers');
+  const offs=all.filter(o=>o.active==='true'||o.active===true).sort((a,b)=>ri(b.rank)-ri(a.rank));
+  const sel=document.getElementById('bulk-officer');
+  sel.innerHTML='<option value="">— Válassz rendőrt —</option>'+offs.map(o=>`<option value="${o._id}" data-rank="${esc(o.rank)}">${esc(o.name)} (${esc(o.badge)})</option>`).join('');
+  const rankSel=document.getElementById('bulk-rank');
+  rankSel.innerHTML='<option value="">— Nem változik —</option>'+RANKS.filter(r=>r!=='Creator').map(r=>`<option value="${r}">${r}</option>`).join('');
+  document.getElementById('bulk-fields').style.display='none';
+  document.getElementById('bulk-info').style.display='none';
+  document.getElementById('bulk-note').value='';
+  ['bulk-rank','bulk-beosztas','bulk-kap','bulk-osztaly','bulk-alosztaly'].forEach(id=>document.getElementById(id).value='');
+  sel.onchange=function(){
+    const id=this.value;
+    if(!id){document.getElementById('bulk-fields').style.display='none';return;}
+    const o=offs.find(x=>x._id===id);
+    if(!o)return;
+    document.getElementById('bulk-fields').style.display='block';
+    document.getElementById('bulk-rank').value=o.rank||'';
+    document.getElementById('bulk-beosztas').value=o.beosztas||'';
+    document.getElementById('bulk-kap').value=o.szolgalatiHely||'';
+    document.getElementById('bulk-osztaly').value=o.osztaly||'';
+    document.getElementById('bulk-alosztaly').value=o.alosztaly||'';
+    document.getElementById('bulk-note').value=o.note||'';
+    const info=document.getElementById('bulk-info');
+    info.textContent=`Jelenlegi adatok betöltve: ${o.name} — ${o.rank}`;
+    info.style.display='block';
+  };
+  document.getElementById('bulk-save').disabled=false;
+  document.getElementById('bulk-save').textContent='✓ Frissítés';
+  openM('mbulk');
+}
+async function saveBulk(){
+  const id=document.getElementById('bulk-officer').value;
+  if(!id){toast('Válassz ki egy rendőrt!','error');return;}
+  const btn=document.getElementById('bulk-save');btn.disabled=true;btn.textContent='Mentés...';
+  const data={};
+  const rank=document.getElementById('bulk-rank').value;if(rank)data.rank=rank;
+  const beosztas=document.getElementById('bulk-beosztas').value;if(beosztas)data.beosztas=beosztas;
+  const kap=document.getElementById('bulk-kap').value;if(kap)data.szolgalatiHely=kap;
+  const osztaly=document.getElementById('bulk-osztaly').value;if(osztaly)data.osztaly=osztaly;
+  const alosztaly=document.getElementById('bulk-alosztaly').value;if(alosztaly)data.alosztaly=alosztaly;
+  const note=document.getElementById('bulk-note').value.trim();if(note)data.note=note;
+  if(!Object.keys(data).length){toast('Nincs módosítandó adat!','error');btn.disabled=false;btn.textContent='✓ Frissítés';return;}
+  try{
+    await fsU('officers',id,data);
+    toast('Adatok frissítve!','success');
+    btn.disabled=false;btn.textContent='✓ Frissítés';
+    closeM('mbulk');
+    nav('officers');
+  }catch(e){toast('Hiba: '+e.message,'error');btn.disabled=false;btn.textContent='✓ Frissítés';}
 }
 
 // ── ROBLOX ──
