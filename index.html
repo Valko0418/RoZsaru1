@@ -321,9 +321,9 @@ async function savePwChange(){
 }
 const ri=r=>RANKS.indexOf(r);
 const isAdmin=(r,o)=>(o&&(o.dbAdmin===true||o.dbAdmin==='true'))||ri(r)>=ri('Vezérőrnagy')||r==='Creator';
-const canClose=r=>ri(r)>=ri('Hadnagy')||r==='Creator';
-const canDel=r=>ri(r)>=ri('Vezérőrnagy')||r==='Creator';
-const canEdit=(a,e)=>e==='Creator'||ri(e)>ri(a);
+const canClose=(r,o)=>isAdmin(r,o)||ri(r)>=ri('Hadnagy');
+const canDel=(r,o)=>isAdmin(r,o)||ri(r)>=ri('Vezérőrnagy')||r==='Creator';
+const canEdit=(a,e,eo)=>isAdmin(e,eo)||e==='Creator'||ri(e)>ri(a);
 let CU=null,CP='dashboard',CF='all',_it=[];
 const PC={
   wanted:{l:'🔍 Körözések & Elfogatók',f:['title','suspect','description','status']},
@@ -509,10 +509,14 @@ async function saveE(col){
 }
 
 // ── VIEW ENTRY ──
+let _openELock=false;
 async function openE(col,id){
-  const item=await fsG(col,id);if(!item){toast('Nem található!','error');return;}
-  const ce=canEdit(item.authorRank,CU.rank)||item.authorId===CU._id;
-  const cd=canDel(CU.rank);const cc=canClose(CU.rank);
+  if(_openELock)return;_openELock=true;
+  const item=await fsG(col,id);
+  _openELock=false;
+  if(!item){toast('Nem található!','error');return;}
+  const ce=canEdit(item.authorRank,CU.rank,CU)||item.authorId===CU._id;
+  const cd=canDel(CU.rank,CU);const cc=canClose(CU.rank,CU);
   const FL=[['title','Cím'],['description','Leírás'],['suspect','Gyanúsított'],['person','Érintett személy'],['amount','Összeg'],['reason','Indoklás'],['participants','Résztvevők'],['shiftStart','Szolgálat kezdete'],['shiftEnd','Szolgálat vége'],['itemName','Tárgy neve'],['quantity','Mennyiség'],['action','Művelet'],['vehicleId','Jármű'],['fuelType','Típus'],['requestType','Kérés típusa'],['currentRank','Jelenlegi rendfokozat'],['requestedRank','Igényelt rendfokozat'],['dateFrom','Kezdő dátum'],['dateTo','Záró dátum']];
   let h=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap"><span class="rb rb-${rc(item.authorRank)}">${esc(item.authorRank||'')}</span><span style="font-size:.88rem;color:var(--gray)">👤 ${esc(item.author||'')}</span>${item.unit?`<span class="ub">${esc(item.unit)}</span>`:''}<span class="sb-${item.status||'open'}">${slabel(item.status)}</span></div>`;
   FL.forEach(([k,l])=>{if(item[k])h+=`<div class="df"><label>${l}</label><div class="val">${esc(String(item[k]))}</div></div>`;});
@@ -526,11 +530,15 @@ async function openE(col,id){
   document.getElementById('mvt').textContent=esc(item.title||'BEJEGYZÉS').toUpperCase();
   document.getElementById('mvb').innerHTML=h;openM('mv');
 }
-async function closeE(col,id){await fsU(col,id,{status:'closed'});closeM('mv');toast('Lezárva.','info');nav(CP);}
-async function delE(col,id){if(!confirm('Biztosan törlöd?'))return;await fsD(col,id);closeM('mv');toast('Törölve.','error');nav(CP);}
+async function closeE(col,id){await fsU(col,id,{status:'closed'});closeM('mv');toast('Lezárva.','info');await refreshList(col);}
+async function delE(col,id){if(!confirm('Biztosan törlöd?'))return;await fsD(col,id);closeM('mv');toast('Törölve.','error');await refreshList(col);}
+async function refreshList(col){
+  if(CP===col){_it=await fsQ(col);const e=document.getElementById('cl-'+col);if(e)e.innerHTML=bCards(_it,col,CF,'');}
+  else if(CP==='dashboard'){nav('dashboard');}
+}
 async function editE(col,id){
   const item=await fsG(col,id);if(!item)return;
-  if(!canEdit(item.authorRank,CU.rank)&&item.authorId!==CU._id){toast('Nincs jogosultságod!','error');return;}
+  if(!canEdit(item.authorRank,CU.rank,CU)&&item.authorId!==CU._id){toast('Nincs jogosultságod!','error');return;}
   closeM('mv');
   document.getElementById('met').textContent='SZERKESZTÉS';
   document.getElementById('meb').innerHTML=bForm(col,item)+`<div style="display:flex;gap:8px;margin-top:14px"><button class="btn boutline" style="flex:1" onclick="closeM('me')">Mégse</button><button class="btn bgold" style="flex:2" id="esb" onclick="updE('${col}','${id}')">✓ Frissítés</button></div>`;
@@ -542,7 +550,7 @@ async function updE(col,id){
   const data={editedBy:CU.name,status:sv('status')||'open'};
   fs.forEach(f=>{if(f!=='status')data[f]=sv(f);});
   if(sv('title'))data.title=sv('title');
-  try{await fsU(col,id,data);closeM('me');toast('Frissítve!','success');nav(CP);}
+  try{await fsU(col,id,data);closeM('me');toast('Frissítve!','success');await refreshList(col);}
   catch(e){toast('Hiba: '+e.message,'error');btn.disabled=false;btn.textContent='✓ Frissítés';}
 }
 
@@ -618,16 +626,23 @@ async function saveOfficer(){
 async function updOff(id){
   const btn=document.getElementById('osb');btn.disabled=true;btn.textContent='Mentés...';
   document.getElementById('ob').disabled=false;
+  const canSetAdmin=CU.rank==='Creator'||CU.rank==='Vezérőrnagy';
   const data={name:document.getElementById('on').value.trim(),rank:document.getElementById('or').value,
     'beosztas':document.getElementById('ob2').value,
     szolgalatiHely:document.getElementById('ou-kap').value,osztaly:document.getElementById('ou-osztaly').value,
     alosztaly:document.getElementById('ou-alosztaly').value,note:document.getElementById('onote').value.trim(),
-    roblox:document.getElementById('orx').value.trim(),
-    dbAdmin:(CU.rank==='Creator'||CU.rank==='Vezérőrnagy')?document.getElementById('o-dbadmin').checked:undefined};
+    roblox:document.getElementById('orx').value.trim()};
+  if(canSetAdmin)data.dbAdmin=document.getElementById('o-dbadmin').checked;
   try{await fsU('officers',id,data);closeM('mo');toast('Frissítve!','success');nav('officers');}
   catch(e){toast('Hiba: '+e.message,'error');btn.disabled=false;btn.textContent='✓ Frissítés';}
 }
-async function remOff(id){if(!confirm('Biztosan eltávolítod?'))return;await fsU('officers',id,{active:'false'});toast('Eltávolítva.','info');nav('officers');}
+async function remOff(id){
+  if(!isAdmin(CU.rank,CU)){toast('Nincs jogosultságod!','error');return;}
+  if(!confirm('Biztosan eltávolítod?'))return;
+  await fsU('officers',id,{active:'false'});
+  toast('Eltávolítva.','info');
+  nav('officers');
+}
 
 // ── ROBLOX ──
 async function rRob(){
