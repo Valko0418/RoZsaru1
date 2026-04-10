@@ -620,7 +620,7 @@ async function saveOfficer(){
     roblox:document.getElementById('orx').value.trim(),
     dbAdmin:(CU.rank==='Creator'||CU.rank==='Vezérőrnagy')&&document.getElementById('o-dbadmin').checked,
     active:'true',createdAt:new Date().toISOString()};
-  try{await fsA('officers',data);closeM('mo');toast(name+' hozzáadva!','success');nav('officers');}
+  try{await fsA('officers',data);btn.disabled=false;btn.textContent='✓ Mentés';closeM('mo');toast(name+' hozzáadva!','success');nav('officers');}
   catch(e){toast('Hiba: '+e.message,'error');btn.disabled=false;btn.textContent='✓ Mentés';}
 }
 async function updOff(id){
@@ -633,7 +633,7 @@ async function updOff(id){
     alosztaly:document.getElementById('ou-alosztaly').value,note:document.getElementById('onote').value.trim(),
     roblox:document.getElementById('orx').value.trim()};
   if(canSetAdmin)data.dbAdmin=document.getElementById('o-dbadmin').checked;
-  try{await fsU('officers',id,data);closeM('mo');toast('Frissítve!','success');nav('officers');}
+  try{await fsU('officers',id,data);btn.disabled=false;btn.textContent='✓ Frissítés';closeM('mo');toast('Frissítve!','success');nav('officers');}
   catch(e){toast('Hiba: '+e.message,'error');btn.disabled=false;btn.textContent='✓ Frissítés';}
 }
 async function remOff(id){
