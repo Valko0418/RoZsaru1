@@ -187,7 +187,7 @@ body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);mi
     </div>
     <div class="lerror" id="lerror"></div>
     <div class="fg"><label>Felhasználónév</label><input type="text" id="ln" placeholder="Pl. Nagy János" autocomplete="off"></div>
-    <div class="fg"><label>Jelszó</label><input type="text" id="lb" placeholder="Pl. BV-12345" autocomplete="off"></div>
+    <div class="fg"><label>Jelvényszám</label><input type="text" id="lb" placeholder="Pl. BV-12345" autocomplete="off"></div>
     <button class="bp" id="lbtn" onclick="doLogin()">🔑 Bejelentkezés</button>
     <p class="lnote">Hozzáférésért fordulj a Fő Adatbázis Ügyintézőhöz.</p>
   </div>
@@ -236,8 +236,8 @@ body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);mi
 <div class="moverlay" id="mo"><div class="modal"><div class="mh"><h3 id="mot">RENDŐR HOZZÁADÁSA</h3><button class="mc" onclick="closeM('mo')">✕</button></div>
 <div class="dform">
   <div class="fg"><label>Teljes Név *</label><input type="text" id="on" placeholder="Pl. Kovács Péter"></div>
-  <div class="fg"><label>Jelszó*</label><input type="text" id="ob" placeholder="Pl. BV-12345"></div>
-  <div class="fg"><label>Rendfokozat</label><select id="or"><option>Tizedes</option><option>Őrmester</option><option>Szakaszvezető-Őrmester</option><option>Törzsőrmester</option><option>Főtörzsőrmester</option><option>Zászlós</option><option>Törzszászlós</option><option>Főtörzszászlós<option>Hadnagy</option><option>Főhadnagy</option><option>Százados</option><option>Őrnagy</option><option>Alezredes</option><option>Ezredes</option><option>Dandártábornok</option><option>Vezérőrnagy</option></select></div>
+  <div class="fg"><label>Jelvényszám *</label><input type="text" id="ob" placeholder="Pl. BV-12345"></div>
+  <div class="fg"><label>Rendfokozat</label><select id="or"><option>Tizedes</option><option>Őrmester</option><option>Szakaszvezető-Őrmester</option><option>Törzsőrmester</option><option>Hadnagy</option><option>Főhadnagy</option><option>Százados</option><option>Őrnagy</option><option>Alezredes</option><option>Ezredes</option><option>Dandártábornok</option><option>Vezérőrnagy</option></select></div>
   <div class="fg"><label>Beosztás</label><select id="ob2">
     <option value="">— Válassz —</option>
     <option>Rendőrfőkapitány</option><option>Rendőrfőkapitány-helyettes</option><option>Kirendeltségvezető</option><option>Kapitányságvezető</option><option>Kiemelt főellenőr</option><option>Osztályvezető</option><option>Alosztályvezető</option><option>Szolgálatirányító tiszt</option><option>Kiemelt főnyomozó</option><option>Kiemelt főelőadó</option><option>Főnyomozó</option><option>Főelőadó</option><option>Nyomozótiszt</option><option>Technikustiszt</option><option>Előadó</option><option>Szolgálatparancsnok</option><option>Csoportvezető</option><option>Nyomozó</option><option>Határrendészeti szakértő</option><option>Baleseti helyszínelő</option><option>Bűnügyi referens</option><option>Kiemelt fő-határrendész</option><option>Járőrparancsnok</option><option>Bűnügyi segédelőadó</option><option>Főhatárrendész</option><option>Járőrvezető</option><option>Bűnügyi fogalmazó</option><option>Határrendész</option><option>Járőr</option>
@@ -273,7 +273,7 @@ body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);mi
     </div>
   </div>
   <div class="fg"><label>Roblox Felhasználónév</label><input type="text" id="orx" placeholder="Pl. Player123"></div>
-  <div style="display:flex;align-items:center;gap:12px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer" onclick="document.getElementById('o-dbadmin').click()">
+  <div id="dbadmin-row" style="display:flex;align-items:center;gap:12px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer" onclick="document.getElementById('o-dbadmin').click()">
     <input type="checkbox" id="o-dbadmin" style="width:20px;height:20px;accent-color:var(--gold);cursor:pointer;flex-shrink:0" onclick="event.stopPropagation()">
     <div>
       <div style="font-size:.9rem;font-weight:600;color:var(--gold2)">⚙️ Adatbázis ügyintéző</div>
@@ -289,7 +289,7 @@ body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);mi
 <div class="moverlay" id="mpw"><div class="modal"><div class="mh"><h3>JELSZÓ VÁLTOZTATÁS</h3><button class="mc" onclick="closeM('mpw')">✕</button></div>
 <div class="dform" id="mpwb">
   <p style="font-size:.82rem;color:var(--gray);margin-bottom:14px">Csak a <strong style="color:var(--gold)">Rendőrfőkapitány (Creator)</strong> és a <strong style="color:var(--gold)">Vezérőrnagy</strong> tud jelszót változtatni más rendőrnek.</p>
-  <div class="fg"><label>Rendőr jelszava</label><input type="text" id="pw-badge" placeholder="Pl. BV-12345" style="text-transform:uppercase"></div>
+  <div class="fg"><label>Rendőr jelvényszáma</label><input type="text" id="pw-badge" placeholder="Pl. BV-12345" style="text-transform:uppercase"></div>
   <div class="fg"><label>Új jelszó</label><input type="password" id="pw-new" placeholder="Minimum 4 karakter"></div>
   <div class="fg"><label>Megerősítés</label><input type="password" id="pw-confirm" placeholder="Ismételd meg"></div>
   <div style="display:flex;gap:8px;margin-top:8px">
@@ -390,7 +390,7 @@ async function doLogin(){
     CU=o;
     document.getElementById('nname').textContent=o.name;
     document.getElementById('nrank').textContent=o.rank;
-    if(isAdmin(o.rank)){document.getElementById('admt').style.display='block';document.getElementById('noff').style.display='flex';document.getElementById('nrob').style.display='flex';}
+    if(isAdmin(o.rank,o)){document.getElementById('admt').style.display='block';document.getElementById('noff').style.display='flex';document.getElementById('nrob').style.display='flex';}
     showS('sa');nav('dashboard');
   }catch(e){err.textContent='Hiba: '+e.message;err.style.display='block';btn.disabled=false;btn.textContent='🔑 Bejelentkezés';}
 }
@@ -548,7 +548,7 @@ async function updE(col,id){
 
 // ── OFFICERS ──
 async function rOff(){
-  if(!isAdmin(CU.rank))return`<p style="color:var(--danger);padding:20px">Hozzáférés megtagadva.</p>`;
+  if(!isAdmin(CU.rank,CU))return`<p style="color:var(--danger);padding:20px">Hozzáférés megtagadva.</p>`;
   const all=await fsQ('officers');
   const offs=all.filter(o=>o.active==='true'||o.active===true).sort((a,b)=>ri(b.rank)-ri(a.rank));
   return`<div class="ph"><div><h2>👥 SZEMÉLYÜGYI NYILVÁNTARTÁS</h2><p>${offs.length} aktív rendőr</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${(CU.rank==='Creator'||CU.rank==='Vezérőrnagy')?`<button class="btn boutline" onclick="openM('mpw')">🔑 Jelszó változtatás</button>`:''}<button class="btn bgold" onclick="openOM(null)">＋ Rendőr hozzáadása</button></div></div>
@@ -579,6 +579,8 @@ function resetOM(){
 async function openOM(id){
   document.getElementById('mot').textContent=id?'RENDŐR SZERKESZTÉSE':'RENDŐR HOZZÁADÁSA';
   const btn=document.getElementById('osb');btn.textContent=id?'✓ Frissítés':'✓ Mentés';btn.onclick=id?()=>updOff(id):saveOfficer;
+  const canSetAdmin=CU.rank==='Creator'||CU.rank==='Vezérőrnagy';
+  document.getElementById('dbadmin-row').style.display=canSetAdmin?'flex':'none';
   resetOM();
   if(id){
     const o=await fsG('officers',id);
@@ -607,7 +609,9 @@ async function saveOfficer(){
   const data={name,badge,rank:document.getElementById('or').value,'beosztas':document.getElementById('ob2').value,
     szolgalatiHely:document.getElementById('ou-kap').value,osztaly:document.getElementById('ou-osztaly').value,
     alosztaly:document.getElementById('ou-alosztaly').value,note:document.getElementById('onote').value.trim(),
-    roblox:document.getElementById('orx').value.trim(),dbAdmin:document.getElementById('o-dbadmin').checked,active:'true',createdAt:new Date().toISOString()};
+    roblox:document.getElementById('orx').value.trim(),
+    dbAdmin:(CU.rank==='Creator'||CU.rank==='Vezérőrnagy')&&document.getElementById('o-dbadmin').checked,
+    active:'true',createdAt:new Date().toISOString()};
   try{await fsA('officers',data);closeM('mo');toast(name+' hozzáadva!','success');nav('officers');}
   catch(e){toast('Hiba: '+e.message,'error');btn.disabled=false;btn.textContent='✓ Mentés';}
 }
@@ -618,7 +622,8 @@ async function updOff(id){
     'beosztas':document.getElementById('ob2').value,
     szolgalatiHely:document.getElementById('ou-kap').value,osztaly:document.getElementById('ou-osztaly').value,
     alosztaly:document.getElementById('ou-alosztaly').value,note:document.getElementById('onote').value.trim(),
-    roblox:document.getElementById('orx').value.trim(),dbAdmin:document.getElementById('o-dbadmin').checked};
+    roblox:document.getElementById('orx').value.trim(),
+    dbAdmin:(CU.rank==='Creator'||CU.rank==='Vezérőrnagy')?document.getElementById('o-dbadmin').checked:undefined};
   try{await fsU('officers',id,data);closeM('mo');toast('Frissítve!','success');nav('officers');}
   catch(e){toast('Hiba: '+e.message,'error');btn.disabled=false;btn.textContent='✓ Frissítés';}
 }
@@ -626,7 +631,7 @@ async function remOff(id){if(!confirm('Biztosan eltávolítod?'))return;await fs
 
 // ── ROBLOX ──
 async function rRob(){
-  if(!isAdmin(CU.rank))return`<p style="color:var(--danger);padding:20px">Hozzáférés megtagadva.</p>`;
+  if(!isAdmin(CU.rank,CU))return`<p style="color:var(--danger);padding:20px">Hozzáférés megtagadva.</p>`;
   const all=await fsQ('officers');
   const offs=all.filter(o=>(o.active==='true'||o.active===true)&&o.roblox).sort((a,b)=>ri(b.rank)-ri(a.rank));
   return`<div class="ph"><h2>🎮 ROBLOX NEVEK</h2></div><div class="panel"><table class="dt"><thead><tr><th>Név</th><th>Jelvény</th><th>Roblox</th><th>Rendfokozat</th></tr></thead><tbody>
