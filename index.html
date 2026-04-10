@@ -323,7 +323,7 @@ const ri=r=>RANKS.indexOf(r);
 const isAdmin=(r,o)=>(o&&(o.dbAdmin===true||o.dbAdmin==='true'))||ri(r)>=ri('Vezérőrnagy')||r==='Creator';
 const canClose=(r,o)=>isAdmin(r,o)||ri(r)>=ri('Hadnagy');
 const canDel=(r,o)=>isAdmin(r,o)||ri(r)>=ri('Vezérőrnagy')||r==='Creator';
-const canEdit=(a,e,eo)=>isAdmin(e,eo)||e==='Creator'||ri(e)>ri(a);
+const canEdit=(a,e,eo)=>isAdmin(e,eo)||e==='Creator'||ri(e)>=ri('Vezérőrnagy')||ri(e)>ri(a);
 let CU=null,CP='dashboard',CF='all',_it=[];
 const PC={
   wanted:{l:'🔍 Körözések & Elfogatók',f:['title','suspect','description','status']},
