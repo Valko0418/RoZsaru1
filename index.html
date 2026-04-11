@@ -365,7 +365,7 @@ const PC={
   wanted:{l:'🔍 Körözések & Elfogatók',f:['title','suspect','description','status']},
   service:{l:'📝 Szolgálati Napló',f:['title','shiftStart','shiftEnd','description']},
   fines:{l:'💰 Bírság Napló',f:['title','person','amount','reason','status']},
-  notes:{l:'📓 Jegyzőkönyvek',f:['title','participants','description']},
+  notes:{l:'📓 Jegyzőkönyvek',f:['title','participants','description','images']},
   permits:{l:'📄 Engedélykérések',f:['title','requestType','description','status']},
   rankup:{l:'⭐ Rendfokozat-igénylések',f:['title','currentRank','requestedRank','reason']},
   storage:{l:'🗃️ Tároló Napló',f:['title','itemName','quantity','action','description']},
@@ -532,14 +532,106 @@ function bForm(col,d){
   if(fs.includes('participants'))h+=fld('participants','Résztvevők','text','');
   if(fs.includes('description'))h+=ta('description','Leírás / Megjegyzés','Részletes leírás...');
   if(fs.includes('status'))h+=sel('status','Státusz',[['open','Nyitott'],['pending','Függőben'],['closed','Lezárt']]);
+  if(fs.includes('images')){
+    const existingImgs=d.images?JSON.parse(d.images||'[]'):[];
+    h+=`<div class="fg">
+      <label>📷 Képek</label>
+      <div id="img-upload-area" style="border:2px dashed rgba(255,255,255,.2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s" onclick="document.getElementById('img-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor='rgba(255,255,255,.2)'" ondrop="handleImgDrop(event)">
+        <div style="color:var(--gray);font-size:.85rem">Kattints vagy húzz ide képeket (max. 5)</div>
+        <input type="file" id="img-file-input" accept="image/*" multiple style="display:none" onchange="handleImgSelect(this)">
+      </div>
+      <div id="img-preview-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+        ${existingImgs.map((url,i)=>`<div style="position:relative;width:80px;height:80px">
+          <img src="${esc(url)}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,.15)">
+          <button onclick="removeImg(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);border:none;border-radius:50%;width:18px;height:18px;color:#fff;font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">✕</button>
+        </div>`).join('')}
+      </div>
+      <div id="img-upload-status" style="font-size:.78rem;color:var(--gold2);margin-top:6px;display:none"></div>
+    </div>`;
+  }
   return h;
 }
 const sv=id=>{const e=document.getElementById('nw-'+id);return e?e.value:''};
+
+// ── IMAGE UPLOAD (ImgBB free API) ──
+let _pendingImages=[];
+function handleImgSelect(input){
+  const files=Array.from(input.files);
+  addImagesToQueue(files);
+  input.value='';
+}
+function handleImgDrop(e){
+  e.preventDefault();
+  document.getElementById('img-upload-area').style.borderColor='rgba(255,255,255,.2)';
+  const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
+  addImagesToQueue(files);
+}
+function addImagesToQueue(files){
+  const existing=document.querySelectorAll('#img-preview-list > div').length;
+  const allowed=Math.min(files.length, 5-existing);
+  if(allowed<=0){toast('Maximum 5 kép tölthető fel!','error');return;}
+  files.slice(0,allowed).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const idx=_pendingImages.length;
+      _pendingImages.push({file,dataUrl:e.target.result,uploaded:false,url:null});
+      const list=document.getElementById('img-preview-list');
+      const div=document.createElement('div');
+      div.style.cssText='position:relative;width:80px;height:80px';
+      div.id='img-pending-'+idx;
+      div.innerHTML=`<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,.15);opacity:.6">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#fff">⏳</div>
+        <button onclick="removePendingImg(${idx})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);border:none;border-radius:50%;width:18px;height:18px;color:#fff;font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">✕</button>`;
+      list.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function removeImg(idx){
+  const list=document.getElementById('img-preview-list');
+  list.children[idx].remove();
+}
+function removePendingImg(idx){
+  _pendingImages[idx]=null;
+  const el=document.getElementById('img-pending-'+idx);
+  if(el)el.remove();
+}
+async function uploadPendingImages(){
+  const toUpload=_pendingImages.filter(p=>p&&!p.uploaded);
+  if(!toUpload.length)return[];
+  const status=document.getElementById('img-upload-status');
+  if(status){status.style.display='block';status.textContent='Képek feltöltése...';}
+  const urls=[];
+  for(const p of toUpload){
+    try{
+      const b64=p.dataUrl.split(',')[1];
+      const fd2=new FormData();
+      fd2.append('image',b64);
+      const r=await fetch('https://api.imgbb.com/1/upload?key=ef3f0082d65e5cf695d99fce68e6e09e',{method:'POST',body:fd2});
+      const j=await r.json();
+      if(j.success){p.uploaded=true;p.url=j.data.url;urls.push(j.data.url);}
+      else throw new Error('ImgBB hiba');
+    }catch(e){toast('Kép feltöltési hiba: '+e.message,'error');}
+  }
+  if(status)status.style.display='none';
+  return urls;
+}
+function getExistingImageUrls(){
+  const imgs=document.querySelectorAll('#img-preview-list img');
+  return Array.from(imgs).filter(img=>img.src.startsWith('http')).map(img=>img.src);
+}
+
 async function saveE(col){
   const btn=document.getElementById('esb');btn.disabled=true;btn.textContent='Mentés...';
   const fs=PC[col]?.f||[];
   const data={title:sv('title')||PC[col].l,author:CU.name,authorId:CU._id,authorRank:CU.rank,unit:CU.unit||'',createdAt:new Date().toISOString(),status:sv('status')||'open'};
-  fs.forEach(f=>{if(f!=='title'&&f!=='status')data[f]=sv(f);});
+  fs.forEach(f=>{if(f!=='title'&&f!=='status'&&f!=='images')data[f]=sv(f);});
+  if(fs.includes('images')){
+    const newUrls=await uploadPendingImages();
+    const allUrls=[...getExistingImageUrls(),...newUrls];
+    data.images=JSON.stringify(allUrls);
+    _pendingImages=[];
+  }
   try{await fsA(col,data);closeM('me');toast('Bejegyzés mentve!','success');nav(CP);}
   catch(e){toast('Hiba: '+e.message,'error');btn.disabled=false;btn.textContent='✓ Mentés';}
 }
@@ -555,9 +647,10 @@ async function openE(col,id){
   const cd=canDel(CU.rank,CU);const cc=canClose(CU.rank,CU);
   const FL=[['title','Cím'],['description','Leírás'],['suspect','Gyanúsított'],['person','Érintett személy'],['amount','Összeg'],['reason','Indoklás'],['participants','Résztvevők'],['shiftStart','Szolgálat kezdete'],['shiftEnd','Szolgálat vége'],['itemName','Tárgy neve'],['quantity','Mennyiség'],['action','Művelet'],['vehicleId','Jármű'],['fuelType','Típus'],['requestType','Kérés típusa'],['currentRank','Jelenlegi rendfokozat'],['requestedRank','Igényelt rendfokozat'],['dateFrom','Kezdő dátum'],['dateTo','Záró dátum']];
   let h=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap"><span class="rb rb-${rc(item.authorRank)}">${esc(item.authorRank||'')}</span><span style="font-size:.88rem;color:var(--gray)">👤 ${esc(item.author||'')}</span>${item.unit?`<span class="ub">${esc(item.unit)}</span>`:''}<span class="sb-${item.status||'open'}">${slabel(item.status)}</span></div>`;
-  FL.forEach(([k,l])=>{if(item[k])h+=`<div class="df"><label>${l}</label><div class="val">${esc(String(item[k]))}</div></div>`;});
+  FL.forEach(([k,l])=>{if(item[k]&&k!=='images')h+=`<div class="df"><label>${l}</label><div class="val">${esc(String(item[k]))}</div></div>`;});
   h+=`<div class="df"><label>Létrehozva</label><div class="val">${fd(item.createdAt)}</div></div>`;
   if(item.editedBy)h+=`<div class="df"><label>Módosítva</label><div class="val">${fd(item.updatedAt)} — ${esc(item.editedBy)}</div></div>`;
+  if(item.images){try{const imgs=JSON.parse(item.images);if(imgs.length)h+=`<div class="df"><label>📷 Képek</label><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">${imgs.map(u=>`<a href="${esc(u)}" target="_blank"><img src="${esc(u)}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'"></a>`).join('')}</div></div>`;}catch(e){}}
   h+=`<div class="arow">`;
   if(ce)h+=`<button class="btn bnavy" onclick="editE('${col}','${id}')">✏️ Szerkesztés</button>`;
   if(cc&&(item.status||'open')!=='closed')h+=`<button class="btn bsuccess bsm" onclick="closeE('${col}','${id}')">✓ Lezárás</button>`;
@@ -584,8 +677,14 @@ async function updE(col,id){
   const btn=document.getElementById('esb');btn.disabled=true;btn.textContent='Mentés...';
   const fs=PC[col]?.f||[];
   const data={editedBy:CU.name,status:sv('status')||'open'};
-  fs.forEach(f=>{if(f!=='status')data[f]=sv(f);});
+  fs.forEach(f=>{if(f!=='status'&&f!=='images')data[f]=sv(f);});
   if(sv('title'))data.title=sv('title');
+  if(fs.includes('images')){
+    const newUrls=await uploadPendingImages();
+    const allUrls=[...getExistingImageUrls(),...newUrls];
+    data.images=JSON.stringify(allUrls);
+    _pendingImages=[];
+  }
   try{await fsU(col,id,data);closeM('me');toast('Frissítve!','success');await refreshList(col);}
   catch(e){toast('Hiba: '+e.message,'error');btn.disabled=false;btn.textContent='✓ Frissítés';}
 }
@@ -789,7 +888,7 @@ const fd=s=>{if(!s)return'';try{return new Date(s).toLocaleString('hu-HU',{year:
 function toast(msg,type='info'){const c=document.getElementById('tc');const t=document.createElement('div');t.className='toast '+type;t.innerHTML=`<span>${{'success':'✅','error':'❌','info':'ℹ️'}[type]||'ℹ️'}</span> ${esc(msg)}`;c.appendChild(t);setTimeout(()=>{t.style.cssText+='opacity:0;transform:translateX(100%);transition:all .4s';setTimeout(()=>t.remove(),400);},3500);}
 function toggleSB(){document.getElementById('sb').classList.toggle('open');}
 function closeSB(){document.getElementById('sb').classList.remove('open');}
-document.querySelectorAll('.moverlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+document.querySelectorAll('.moverlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o){o.classList.remove('open');if(o.id==='me')_pendingImages=[];}}));
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('slo').classList.contains('active'))doLogin();});
 </script>
 </body>
