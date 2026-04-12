@@ -204,10 +204,6 @@ body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);mi
     <div class="nuser">
       <span class="uname" id="nname"></span>
       <span class="rpill" id="nrank"></span>
-      <button id="live-toggle" onclick="toggleLive()" title="Live frissítés BE" style="background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:5px 10px;color:var(--success);font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:5px">
-        <span id="live-dot" style="width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;transition:all .3s"></span>
-        LIVE <span id="live-countdown" style="font-size:.7rem;opacity:.7;min-width:18px"></span>
-      </button>
       <button class="blog" onclick="doLogout()">Kilépés</button>
     </div>
   </div>
@@ -431,10 +427,10 @@ async function doLogin(){
     document.getElementById('nname').textContent=o.name;
     document.getElementById('nrank').textContent=o.rank;
     if(isAdmin(o.rank,o)){document.getElementById('admt').style.display='block';document.getElementById('noff').style.display='flex';document.getElementById('nrob').style.display='flex';}
-    showS('sa');nav('dashboard');startLive();
+    showS('sa');nav('dashboard');
   }catch(e){err.textContent='Hiba: '+e.message;err.style.display='block';btn.disabled=false;btn.textContent='🔑 Bejelentkezés';}
 }
-function doLogout(){CU=null;document.getElementById('ln').value='';document.getElementById('lb').value='';document.getElementById('lerror').style.display='none';document.getElementById('lbtn').disabled=false;document.getElementById('lbtn').textContent='🔑 Bejelentkezés';['admt','noff','nrob'].forEach(id=>document.getElementById(id).style.display='none');stopLive();showS('slo');}
+function doLogout(){CU=null;document.getElementById('ln').value='';document.getElementById('lb').value='';document.getElementById('lerror').style.display='none';document.getElementById('lbtn').disabled=false;document.getElementById('lbtn').textContent='🔑 Bejelentkezés';['admt','noff','nrob'].forEach(id=>document.getElementById(id).style.display='none');showS('slo');}
 
 // ── NAV ──
 function nav(page){CP=page;CF='all';_it=[];document.querySelectorAll('.sbi').forEach(e=>e.classList.toggle('active',e.dataset.page===page));closeSB();rPage(page);}
@@ -446,97 +442,6 @@ async function rPage(page){
     else if(page==='officers')c.innerHTML=await rOff();
     else if(page==='roblox')c.innerHTML=await rRob();
   }catch(e){c.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Hiba: ${esc(e.message)}</p></div>`;}
-}
-
-// ── LIVE UPDATE ──
-let _liveInterval=null,_liveCountdown=null,_liveSec=15,_liveActive=false,_liveEnabled=true;
-const LIVE_INTERVAL=15000;
-
-function startLive(){
-  if(!_liveEnabled||_liveActive)return;
-  _liveActive=true;
-  _liveSec=LIVE_INTERVAL/1000;
-  updateLiveUI();
-  _liveCountdown=setInterval(()=>{
-    _liveSec--;
-    updateLiveUI();
-    if(_liveSec<=0)_liveSec=LIVE_INTERVAL/1000;
-  },1000);
-  _liveInterval=setInterval(async()=>{
-    if(!CU)return;
-    const openModal=document.querySelector('.moverlay.open');
-    if(openModal)return; // Ne frissítsen ha modal nyitva van
-    _liveSec=LIVE_INTERVAL/1000;
-    try{
-      await silentRefresh(CP);
-      flashLiveIndicator();
-    }catch(e){}
-  },LIVE_INTERVAL);
-}
-
-function stopLive(){
-  _liveActive=false;
-  clearInterval(_liveInterval);
-  clearInterval(_liveCountdown);
-  _liveInterval=null;_liveCountdown=null;
-  updateLiveUI();
-}
-
-async function silentRefresh(page){
-  // Csendesen frissíti az adatokat anélkül hogy "Betöltés..." felirat lenne
-  const c=document.getElementById('mc');
-  const prevScroll=c.scrollTop;
-  let html='';
-  if(page==='dashboard')html=await rDash();
-  else if(PC[page])html=await rListSilent(page);
-  else if(page==='officers')html=await rOff();
-  else if(page==='roblox')html=await rRob();
-  if(html){c.innerHTML=html;c.scrollTop=prevScroll;}
-}
-
-async function rListSilent(col){
-  const prev=CF;
-  const prevSearch=document.querySelector('.sbar input')?.value||'';
-  _it=await fsQ(col);
-  const html=`<div class="ph"><div><h2>${PC[col].l}</h2><p>${_it.length} bejegyzés</p></div><button class="btn bgold" onclick="openN('${col}')">＋ Új bejegyzés</button></div>
-  <div class="sbar"><span>🔍</span><input type="text" placeholder="Keresés..." oninput="fCards(this.value,'${col}')" value="${esc(prevSearch)}"></div>
-  <div class="ftabs">
-    <button class="ft${prev==='all'?' active':''}" onclick="sFilter(this,'all','${col}')">Összes</button>
-    <button class="ft${prev==='open'?' active':''}" onclick="sFilter(this,'open','${col}')">Nyitott</button>
-    <button class="ft${prev==='closed'?' active':''}" onclick="sFilter(this,'closed','${col}')">Lezárt</button>
-    <button class="ft${prev==='mine'?' active':''}" onclick="sFilter(this,'mine','${col}')">Saját</button>
-  </div>
-  <div id="cl-${col}">${bCards(_it,col,prev,prevSearch)}</div>`;
-  return html;
-}
-
-function flashLiveIndicator(){
-  const ind=document.getElementById('live-dot');
-  if(!ind)return;
-  ind.style.background='#52be80';
-  ind.style.boxShadow='0 0 6px #52be80';
-  setTimeout(()=>{ind.style.background='';ind.style.boxShadow='';},800);
-}
-
-function updateLiveUI(){
-  const btn=document.getElementById('live-toggle');
-  const cnt=document.getElementById('live-countdown');
-  if(!btn)return;
-  if(_liveEnabled&&_liveActive){
-    btn.title='Live frissítés BE (kattints a kikapcsoláshoz)';
-    btn.style.color='var(--success)';
-    if(cnt)cnt.textContent=_liveSec+'s';
-  }else{
-    btn.title='Live frissítés KI (kattints a bekapcsoláshoz)';
-    btn.style.color='var(--gray)';
-    if(cnt)cnt.textContent='';
-  }
-}
-
-function toggleLive(){
-  _liveEnabled=!_liveEnabled;
-  if(_liveEnabled){startLive();toast('Live frissítés bekapcsolva ✅','success');}
-  else{stopLive();toast('Live frissítés kikapcsolva','info');}
 }
 
 // ── DASHBOARD ──
