@@ -393,15 +393,23 @@ function mf(field,op,val){return{fieldFilter:{field:{fieldPath:field},op,value:{
 
 // ── INIT ──
 async function init(){
+  // Ha már inicializálva volt, skip a kvóta-kímélés érdekében
+  if(localStorage.getItem('rz_initialized')){
+    ss('lst','Kész!');
+    setTimeout(()=>showS('slo'),200);
+    return;
+  }
   ss('lst','Adatbázis ellenőrzése...');
   try{
     const existing=await fsQ('officers',[mf('badge','EQUAL','CREATOR-001')]);
     if(!existing.length){ss('lst','Rendszer inicializálása...');await fsA('officers',{name:'Admin',badge:'CREATOR-001',rank:'Creator',unit:'Parancsnokság',roblox:'Creator',active:'true',createdAt:new Date().toISOString()});}
+    localStorage.setItem('rz_initialized','1');
     ss('lst','Kész!');
     setTimeout(()=>showS('slo'),400);
   }catch(e){
     document.getElementById('spin').style.display='none';
-    document.getElementById('lerrmsg').textContent='❌ '+e.message+' — Ellenőrizd a Firestore Rules beállításait!';
+    const msg=e.message.includes('429')?'❌ Firebase kvóta kimerült (429) — Próbáld újra hajnali 2 után, vagy csökkentsd a lekérdezések számát.':'❌ '+e.message+' — Ellenőrizd az internet-kapcsolatot vagy a Firebase projekt beállításait.';
+    document.getElementById('lerrmsg').textContent=msg;
     document.getElementById('lerr').style.display='block';
   }
 }
